@@ -1,0 +1,202 @@
+# yaml-language-server: $schema=https://json-schema.org/draft/2020-12/schema
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: http://example.com/example.json
+type: object
+title: Root Schema
+required:
+- name
+properties:
+  name:
+    $ref: "#/definitions/input_name"
+  id:
+    $ref: "#/definitions/input_id"
+  ownerId:
+    $ref: "#/definitions/input_ownerId"
+  description:
+    $ref: "#/definitions/input_description"
+  configVersion:
+    $ref: "#/definitions/input_configVersion"
+  typeId:
+    $ref: "#/definitions/input_typeId"
+  fields:
+    $ref: "#/definitions/input_fields"
+  links:
+    $ref: "#/definitions/input_links"
+  relationships:
+    $ref: "#/definitions/input_relationships"
+  customFields:
+    $ref: "#/definitions/input_customFields"
+  labels:
+    $ref: "#/definitions/input_labels"
+allOf:
+- if:
+    properties:
+      typeId:
+        $ref: "#/definitions/tierValidComponents"
+  then:
+    properties:
+      fields:
+        required:
+        - tier
+- if:
+    properties:
+      typeId:
+        $ref: "#/definitions/tierInvalidComponents"
+  then:
+    properties:
+      fields:
+        properties:
+          lifecycle: true
+        additionalProperties: false
+definitions:
+  lifecycleEnum:
+    enum:
+    - Active
+    - Pre-release
+    - Deprecated
+  componentPattern:
+    pattern: ^ari:cloud:compass:[A-Za-z0-9]{8}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{12}:component/[A-Za-z0-9]{8}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{12}/[A-Za-z0-9]{8}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{12}$
+  ownerPattern:
+    pattern: ^ari:cloud:(identity|teams)::team/[A-Za-z0-9]{8}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{12}
+  userPattern:
+    pattern: ^ari:cloud:compass:[A-Za-z0-9]{8}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{12}:user/[A-Za-z0-9]{8}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{12}
+  tierValidComponents:
+    enum:
+    - SERVICE
+    - CAPABILITY
+    - CLOUD_RESOURCE
+    - DATA_PIPELINE
+    - MACHINE_LEARNING_MODEL
+    - UI_ELEMENT
+    - WEBSITE
+  tierInvalidComponents:
+    enum:
+    - APPLICATION
+    - LIBRARY
+    - OTHER
+  tierComponents:
+    enum:
+    - SERVICE
+    - CAPABILITY
+    - CLOUD_RESOURCE
+    - DATA_PIPELINE
+    - MACHINE_LEARNING_MODEL
+    - UI_ELEMENT
+    - WEBSITE
+    - APPLICATION
+    - LIBRARY
+    - OTHER
+  linksEnum:
+    enum:
+    - REPOSITORY
+    - CHAT_CHANNEL
+    - DOCUMENT
+    - DASHBOARD
+    - ON_CALL
+    - PROJECT
+    - OTHER_LINK
+  customFieldTypes:
+    enum:
+    - text
+    - boolean
+    - number
+    - user
+    - single_select
+    - multi_select
+  fields_tier:
+    type: integer
+    default: 4
+    minimum: 1
+    maximum: 4
+    title: There are several tiers of service, from 1 to 4. The lower the tier, the more critical the service is to the business. The default tier is 4
+  fields_lifecycle:
+    allOf:
+    - type: string
+      title: "The lifecycle Schema. There are three lifecycle states: Active, Pre-release, and Deprecated"
+    - $ref: "#/definitions/lifecycleEnum"
+  input_id:
+    allOf:
+    - type: string
+      description: An unique, unchangeable identifier of the component in Compass. The id must match an existing component in your Compass catalog. The Bitbucket integration uses the id to determine which component your compass.yml file refers to.
+    - pattern: ^ari:cloud:compass:(.*):component/(.*)
+  input_name:
+    type: string
+    description: The name of the component. The name must be unique within the scope of the owner. The Bitbucket integration uses the name to determine which component your compass.yml file refers to.
+  input_ownerId:
+    allOf:
+    - type: string
+      title: An unique identifier of the team that owns the component. If specified, the ownerId must match a team in your Atlassian organization
+    - $ref: "#/definitions/ownerPattern"
+  input_description:
+    type: [string, "null"]
+    description: A description of the component. The description is displayed in the component details page in Compass.
+  input_configVersion:
+    type: integer
+    enum:
+    - 1
+    title: Schema version, for now only version 1 is supported
+    description: Schema version, for now only version 1 is supported
+  input_typeId:
+    allOf:
+    - type: string
+      description: The type of the component.
+    - $ref: "#/definitions/tierComponents"
+  input_fields:
+    type: object
+    default: {}
+    title: The fields Schema
+    properties:
+      tier:
+        $ref: "#/definitions/fields_tier"
+      lifecycle:
+        $ref: "#/definitions/fields_lifecycle"
+  input_links:
+    type: array
+    items:
+      type: object
+      required:
+      - type
+      - url
+      properties:
+        name:
+          type: string
+          description: The name of the link. The name is displayed in the component details page in Compass.
+        type:
+          allOf:
+          - type: string
+            description: The type of the link. The type is used to determine the icon that is displayed in the component details page in Compass.
+          - $ref: "#/definitions/linksEnum"
+        url:
+          type: string
+          pattern: ^(http|https)://.*
+  input_relationships:
+    type: object
+    properties:
+      DEPENDS_ON:
+        type: array
+        items:
+          allOf:
+          - type: string
+          - $ref: "#/definitions/componentPattern"
+  input_labels:
+    type: array
+    items:
+      type: string
+      pattern: ^([a-zA-Z0-9_-]+:)?[a-zA-Z0-9_-]+$
+  input_customFields:
+    type: [array, "null"]
+    items:
+      type: object
+      required:
+      - name
+      - type
+      - value
+      properties:
+        name:
+          type: string
+          description: The name of the custom field. The name must be unique within the scope of the component.
+        type:
+          allOf:
+          - type: string
+            description: The type of the custom field. The type is used to determine the input type that is displayed in the component details page in Compass.
+          - $ref: "#/definitions/customFieldTypes"
