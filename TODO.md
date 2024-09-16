@@ -1,0 +1,4 @@
+- [ ] Generate YAML + JSON (Potentially use Cue?)
+- [ ] Generate HTML site for easy browsability
+- [ ] Let links be:
+  - `schemas.kil.dev/google.yamlfmt` with no extention
